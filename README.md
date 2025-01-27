@@ -1,3 +1,10 @@
+# Changes on this fork
+
+* Remove chaching (it caused more problems then it solved)
+* (TODO) Create a function that only reads a subtree of UI nodes
+
+---
+
 # eve-memory-reader
 
 This is mostly a passion project inspired by https://github.com/Arcitectus/Sanderling with the aim of being faster and more memory efficient.

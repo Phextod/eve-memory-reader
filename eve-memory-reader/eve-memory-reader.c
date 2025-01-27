@@ -38,7 +38,12 @@ char* DICT_KEYS_OF_INTEREST[25] = {
 	"_sr",
 
 	//  Found in "_sr" Bunch
-	"htmlstr"
+	//"htmlstr"
+
+	// Adding more keys causes buffer overflow after some time
+	// TODO: fix overflow (or confirm with testing that it came from other sources) and add the rest of the keys
+	"_texturePath"
+	//"_texturePath", "_opacity", "_bgColor", "isExpanded"
 };
 
 ULONGLONG find_min(const ULONGLONG* arr, UINT length) {

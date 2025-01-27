@@ -1,6 +1,6 @@
 # Changes on this fork
 
-* Remove chaching (it caused more problems than it solved)
+* Remove caching (it caused more problems than it solved)
 * (TODO) Create a function that only reads a subtree of UI nodes
 
 ---

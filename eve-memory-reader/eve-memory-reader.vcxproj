@@ -179,18 +179,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cache.c" />
     <ClCompile Include="eve-memory-reader.c" />
-    <ClCompile Include="hashtable.c" />
     <ClCompile Include="memory.c" />
     <ClCompile Include="process.c" />
     <ClCompile Include="python.c" />
     <ClCompile Include="uitree.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cache.h" />
     <ClInclude Include="eve-memory-reader.h" />
-    <ClInclude Include="hashtable.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="process.h" />
     <ClInclude Include="python.h" />

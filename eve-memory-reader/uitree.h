@@ -7,8 +7,6 @@
 #include <stdio.h>
 #include "types.h"
 #include "python.h"
-#include "hashtable.h"
-#include "cache.h"
 
 
 typedef struct

@@ -516,7 +516,7 @@ char* get_python_type_name_from_python_type_object_address(ULONGLONG address)
 char* get_python_type_name_from_python_object_address(ULONGLONG address)
 {
 	ULONGLONG hash_index = 0;
-	char* response = HashTableFind(python_type_name_cache, address, &hash_index, NULL);
+	char* response = NULL;
 	if (response != NULL)
 		return response;
 	ULONGLONG bytes_read = 0;
@@ -542,7 +542,6 @@ char* get_python_type_name_from_python_object_address(ULONGLONG address)
 	type_object_memory = NULL;
 	if (response == NULL)
 		return NULL;
-	HashTableInsert(python_type_name_cache, address, response, _msize(response), NULL);
 	return response;
 }
 
@@ -623,7 +622,7 @@ PyDictEntryList* read_active_dictionary_entries_from_address(ULONGLONG address)
 char* read_python_string_value(ULONGLONG address, ULONGLONG max_length)
 {
 	ULONGLONG hash_index = 0;
-	char* response = HashTableFind(python_string_value_cache, address, &hash_index, NULL);
+	char* response = NULL;
 	if (response != NULL)
 		return response;
 	ULONGLONG bytes_read = 0;
@@ -663,7 +662,6 @@ char* read_python_string_value(ULONGLONG address, ULONGLONG max_length)
 	response[bytes_read] = '\0';
 	free(string_bytes);
 	string_bytes = NULL;
-	HashTableInsert(python_string_value_cache, address, response, _msize(response), NULL);
 	return response;
 }
 
@@ -844,7 +842,7 @@ PythonDictValueRepresentation* get_dict_entry_value_representation(ULONGLONG add
 		return NULL;
 
 	ULONGLONG hash_index = 0;
-	PythonDictValueRepresentation* repr = HashTableFind(dict_entry_cache, address, &hash_index, dict_entry_cache_copy_fn);
+	PythonDictValueRepresentation* repr = NULL;
 	if (repr != NULL)
 	{
 		free(python_type_name);
@@ -879,7 +877,6 @@ PythonDictValueRepresentation* get_dict_entry_value_representation(ULONGLONG add
 	else if (strcmp(python_type_name, "Bunch") == 0)
 		read_python_type_bunch(address, repr);
 
-	HashTableInsert(dict_entry_cache, address, repr, _msize(repr), dict_entry_cache_copy_fn);
 	return repr;
 }
 
@@ -1174,16 +1171,6 @@ __declspec(dllexport) char* get_ui_json()
 
 __declspec(dllexport) void read_ui_trees()
 {
-	if ((unsigned long)time(NULL) - cache_last_flushed > 30)
-	{
-		printf("flushing cache...\n");
-		int total_flushed = 0;
-		total_flushed += HashTableFlushStale(dict_entry_cache, dict_entry_cache_free_fn);
-		total_flushed += HashTableFlushStale(python_string_value_cache, NULL);
-		total_flushed += HashTableFlushStale(python_type_name_cache, NULL);
-		printf("cache flushed %d stale items!\n", total_flushed);
-		cache_last_flushed = (unsigned long)time(NULL);
-	}
 	UINT i;
 	for (i = 0; i < ui_roots->used; ++i)
 	{
@@ -1237,7 +1224,6 @@ __declspec(dllexport) int initialize()
 		return 1;
 	}
 
-	initialize_cache();
 	cache_last_flushed = (unsigned long)time(NULL);
 	printf("found %s process (pid: %d)\n", PROCESS_NAME, pid);
 	get_memory_and_root_addresses(pid);

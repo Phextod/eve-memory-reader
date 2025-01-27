@@ -30,12 +30,6 @@
     <ClCompile Include="uitree.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hashtable.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="cache.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="memory.h">
@@ -54,12 +48,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="eve-memory-reader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="hashtable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

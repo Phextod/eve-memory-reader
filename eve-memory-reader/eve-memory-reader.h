@@ -11,8 +11,6 @@
 #include "process.h"
 #include "python.h"
 #include "uitree.h"
-#include "hashtable.h"
-#include "cache.h"
 
 
 extern ProcessSample* ps;

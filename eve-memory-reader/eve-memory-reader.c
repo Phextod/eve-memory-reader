@@ -1201,6 +1201,24 @@ __declspec(dllexport) void read_ui_trees()
 	}
 }
 
+__declspec(dllexport) void read_ui_trees_from_address(ULONGLONG address)
+{
+	number_of_nodes = 0;
+	UITreeNode* ui_tree = read_ui_tree_from_address(address, 99);
+	if (ui_tree != NULL)
+	{
+		//printf("found %I64u nodes!\n", number_of_nodes);
+		char* json_str = PrintUITreeNode(ui_tree, 0);
+		size_t json_str_len = strlen(json_str);
+		ui_json = malloc(json_str_len + 1);
+		memcpy_s(ui_json, json_str_len, json_str, json_str_len);
+		ui_json[json_str_len] = '\0';
+		free(json_str);
+		FreeUITreeNode(ui_tree);
+	}
+	else FreeUITreeNode(ui_tree);
+}
+
 
 void get_memory_and_root_addresses(DWORD pid)
 {

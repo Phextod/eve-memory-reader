@@ -21,6 +21,7 @@ extern ULONGLONG cache_last_flushed;
 extern char* ui_json;
 
 __declspec(dllexport) void read_ui_trees();
+__declspec(dllexport) void read_ui_trees_from_address(ULONGLONG);
 __declspec(dllexport) char* get_ui_json();
 __declspec(dllexport) void free_ui_json();
 __declspec(dllexport) int initialize();

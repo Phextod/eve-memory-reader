@@ -1,7 +1,8 @@
 # Changes on this fork
 
-* Remove caching (it caused more problems than it solved)
-* Create a function that only reads a subtree of UI nodes
+* Removed caching (it caused more problems than it solved)
+* Created a function that only reads a subtree of UI nodes
+* Added handling for PyColor and float data types
 
 ---
 

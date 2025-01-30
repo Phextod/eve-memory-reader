@@ -170,6 +170,13 @@ ULONGLONG cast_byte_array_to_ulong(byte* content, ULONGLONG size)
 	return result;
 }
 
+FLOAT cast_byte_array_to_float(byte* content)
+{
+	FLOAT result;
+	memcpy(&result, content, sizeof(FLOAT));
+	return result;
+}
+
 ULONGLONG* cast_byte_array_to_ulong_array(byte* content, ULONGLONG size)
 {
 	ULONGLONG* result = malloc(sizeof(ULONGLONG) * (size/sizeof(ULONGLONG)));
@@ -628,8 +635,6 @@ char* read_python_string_value(ULONGLONG address, ULONGLONG max_length)
 {
 	ULONGLONG hash_index = 0;
 	char* response = NULL;
-	if (response != NULL)
-		return response;
 	ULONGLONG bytes_read = 0;
 	byte* string_object_memory = read_bytes(address, 0x20, &bytes_read);
 
@@ -798,8 +803,42 @@ void read_python_type_int(ULONGLONG address, PythonDictValueRepresentation* repr
 	int_object_memory = NULL;
 }
 
+void read_python_type_float_to_FLOAT_type(ULONGLONG address, FLOAT* return_value)
+{
+	ULONGLONG bytes_read = 0;
+	byte* float_object_memory = read_bytes(address, 0x20, &bytes_read);
+
+	if (float_object_memory == NULL)
+		return;
+
+	if (bytes_read != 0x18)
+	{
+		free(float_object_memory);
+		float_object_memory = NULL;
+		return;
+	}
+
+	byte* sliced = slice_byte_array(float_object_memory, bytes_read, 0x10, bytes_read);
+	*return_value = cast_byte_array_to_float(sliced);
+	free(sliced);
+	sliced = NULL;
+
+	free(float_object_memory);
+	float_object_memory = NULL;
+}
+
 void read_python_type_float(ULONGLONG address, PythonDictValueRepresentation* repr)
 {
+	FLOAT* value = NULL;
+	read_python_type_float_to_FLOAT_type(address, value);
+
+	if (value == NULL)
+	{
+		return;
+	}
+
+	repr->is_float = TRUE;
+	repr->float_value = *value;
 }
 
 void read_python_type_bool(ULONGLONG address, PythonDictValueRepresentation* repr)
@@ -840,6 +879,80 @@ void read_python_type_bunch(ULONGLONG address, PythonDictValueRepresentation* re
 {
 }
 
+void read_value_percent_from_dict_entry_key(const char* dict_entry_key, PyDictEntryList* dictionary_entries, int* value)
+{
+	ULONGLONG value_address;
+
+	UINT i;
+	for (i = 0; i < dictionary_entries->used; ++i)
+	{
+		if (strcmp(dictionary_entries->data[i]->key_resolved, dict_entry_key) == 0) 
+		{
+			value_address = dictionary_entries->data[i]->value;
+			break;
+		}
+	}
+
+	if (value_address == NULL)
+	{
+		return;
+	}
+
+	FLOAT* float_value = NULL;
+	read_python_type_float_to_FLOAT_type(value_address, float_value);
+
+	if (float_value == NULL)
+	{
+		return;
+	}
+
+	*value = (int)(*float_value * 100);
+}
+
+void read_python_type_PyColor(ULONGLONG address, PythonDictValueRepresentation* repr)
+{
+	ULONGLONG bytes_read = 0;
+	byte* py_color_object_memory = read_bytes(address, 0x18, &bytes_read);
+
+	if (py_color_object_memory == NULL)
+		return;
+
+	if (bytes_read != 0x18)
+	{
+		free(py_color_object_memory);
+		py_color_object_memory = NULL;
+		return;
+	}
+
+	byte* sliced = slice_byte_array(py_color_object_memory, bytes_read, 0x10, bytes_read);
+	ULONGLONG dictionary_address = cast_byte_array_to_ulong(sliced, bytes_read - 0x10);
+	PyDictEntryList* dictionary_entries = get_dict_entries_with_string_keys(dictionary_address);
+
+	if (dictionary_entries == NULL) 
+	{
+		free(py_color_object_memory);
+		py_color_object_memory = NULL;
+		free(sliced);
+		sliced = NULL;
+		free(dictionary_entries);
+		return;
+	}
+
+	PyColor *color_representation = malloc(sizeof(PyColor));
+
+	read_value_percent_from_dict_entry_key("_a", dictionary_entries, color_representation->aPercent);
+	read_value_percent_from_dict_entry_key("_r", dictionary_entries, color_representation->rPercent);
+	read_value_percent_from_dict_entry_key("_g", dictionary_entries, color_representation->gPercent);
+	read_value_percent_from_dict_entry_key("_b", dictionary_entries, color_representation->bPercent);
+
+	repr->is_pycolor = TRUE;
+	repr->color_value = *color_representation;
+
+	free(color_representation);
+
+	printf("color");
+}
+
 PythonDictValueRepresentation* get_dict_entry_value_representation(ULONGLONG address)
 {
 	char* python_type_name = get_python_type_name_from_python_object_address(address);
@@ -868,6 +981,7 @@ PythonDictValueRepresentation* get_dict_entry_value_representation(ULONGLONG add
 	repr->int_value = 0;
 	repr->bool_value = FALSE;
 	repr->float_value = 0.0;
+	//repr->color_value = todo set default for color_value
 
 	if (strcmp(python_type_name, "str") == 0)
 		read_python_type_str(address, repr);
@@ -881,6 +995,9 @@ PythonDictValueRepresentation* get_dict_entry_value_representation(ULONGLONG add
 		read_python_type_float(address, repr);
 	else if (strcmp(python_type_name, "Bunch") == 0)
 		read_python_type_bunch(address, repr);
+	else if (strcmp(python_type_name, "PyColor") == 0)
+		read_python_type_PyColor(address, repr);
+
 
 	return repr;
 }

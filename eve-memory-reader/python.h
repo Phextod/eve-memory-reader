@@ -5,6 +5,12 @@
 #include <winnt.h>
 #include "types.h"
 
+typedef struct {
+	INT aPercent;
+	INT rPercent;
+	INT gPercent;
+	INT bPercent;
+} PyColor;
 
 typedef struct {
 	ULONGLONG address;
@@ -21,6 +27,7 @@ typedef struct {
 	INT int_value;
 	BOOL bool_value;
 	FLOAT float_value;
+	PyColor color_value;
 } PythonDictValueRepresentation;
 
 typedef struct {

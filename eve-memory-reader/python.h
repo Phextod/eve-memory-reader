@@ -26,7 +26,8 @@ typedef struct {
 	char* unicode_value;
 	INT int_value;
 	BOOL bool_value;
-	FLOAT float_value;
+	//float in python is 64bit, so it should be double in c
+	DOUBLE float_value;
 	PyColor color_value;
 } PythonDictValueRepresentation;
 

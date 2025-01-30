@@ -111,6 +111,25 @@ void FreeUITreeNode(UITreeNode* n)
 	n = NULL;
 }
 
+char* PrintPyColor(PyColor* color)
+{
+	size_t size = 100;
+	char* response = malloc(sizeof(char) * size);
+	if (response == NULL)
+		return;
+
+	strcpy_s(response, size, "");
+
+	sprintf_s(response, size, "{");
+	sprintf_s(response, size, "%s\"aPercent\": %d,", response, color->aPercent);
+	sprintf_s(response, size, "%s\"rPercent\": %d,", response, color->rPercent);
+	sprintf_s(response, size, "%s\"gPercent\": %d,", response, color->gPercent);
+	sprintf_s(response, size, "%s\"bPercent\": %d", response, color->bPercent);
+	sprintf_s(response, size, "%s}", response);
+
+	return response;
+}
+
 char* PrintUITreeNodeDictEntryList(UITreeNodeDictEntryList* del)
 {
 	char* response = malloc(sizeof(char) * 5000);
@@ -137,6 +156,13 @@ char* PrintUITreeNodeDictEntryList(UITreeNodeDictEntryList* del)
 			sprintf_s(response, 5000, "%s%f,", response, del->data[i]->value->float_value);
 		else if (del->data[i]->value->is_bool)
 			sprintf_s(response, 5000, "%s%s,", response, del->data[i]->value->bool_value ? "true" : "false");
+		else if (del->data[i]->value->is_pycolor)
+		{
+			char* color_string = PrintPyColor(&del->data[i]->value->color_value);
+			sprintf_s(response, 5000, "%s%s,", response, color_string);
+			free(color_string);
+		}
+			
 		else
 			sprintf_s(response, 5000, "%snull,", response);
 	}

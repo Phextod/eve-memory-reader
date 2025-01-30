@@ -970,7 +970,10 @@ PythonDictValueRepresentation* get_dict_entry_value_representation(ULONGLONG add
 	repr->int_value = 0;
 	repr->bool_value = FALSE;
 	repr->float_value = 0.0;
-	//repr->color_value = todo set default for color_value
+	repr->color_value.aPercent = 0;
+	repr->color_value.rPercent = 0;
+	repr->color_value.gPercent = 0;
+	repr->color_value.bPercent = 0;
 
 	if (strcmp(python_type_name, "str") == 0)
 		read_python_type_str(address, repr);

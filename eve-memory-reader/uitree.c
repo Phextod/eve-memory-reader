@@ -177,7 +177,7 @@ char* PrintUITreeNodeDictEntryList(UITreeNodeDictEntryList* del)
 
 char* PrintUITreeNode(UITreeNode* n, int level)
 {
-	size_t size = 500000;
+	size_t size = 700000;
 	char* response = malloc(sizeof(char) * size);
 	if (n == NULL)
 		return response;

@@ -1208,6 +1208,11 @@ UITreeNode* read_ui_tree_from_address(ULONGLONG address, int max_depth)
 	{
 		char* key_object_type_name = get_python_type_name_from_python_object_address(dict_entries->data[i]->key);
 
+		if (key_object_type_name == NULL)
+		{
+			continue;
+		}
+
 		if (strcmp(key_object_type_name, "str") != 0)
 		{
 			free(key_object_type_name);

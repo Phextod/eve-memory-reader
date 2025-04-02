@@ -4,6 +4,7 @@
 * Created a function that only reads a subtree of UI nodes
 * Added handling for PyColor and float data types
 * Fixed crash on fitting window
+* Added a special case for reading the child nodes of ButtonGroup type nodes
 
 ---
 

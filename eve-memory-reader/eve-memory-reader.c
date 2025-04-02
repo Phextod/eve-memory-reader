@@ -1059,12 +1059,111 @@ UITreeNode** read_children(UITreeNodeDictEntryList* dict_entries_of_interest, in
 			return NULL;
 		}
 
+		byte* python_list_object_memory = NULL;
+		PyDictEntryList* py_children_list_dict_entries = NULL;
+
+		char* children_list_type = get_python_type_name_from_python_object_address(children_entry->value);
+		if (strcmp(children_list_type, "PyChildrenList") == 0) {
+			bytes_read = 0;
+			python_list_object_memory = read_bytes(children_entry->value, 0x20, &bytes_read);
+
+			if (python_list_object_memory == NULL)
+			{
+				free(children_list_memory);
+				FreePyDictEntryList(children_dict_entries);
+				children_list_memory = NULL;
+				return NULL;
+			}
+
+			if (bytes_read != 0x20)
+			{
+				free(python_list_object_memory);
+				free(children_list_memory);
+				FreePyDictEntryList(children_dict_entries);
+				python_list_object_memory = NULL;
+				children_list_memory = NULL;
+				return NULL;
+			}
+
+			sliced = slice_byte_array(python_list_object_memory, bytes_read, 0x10, 0x10 + 8);
+			if (sliced == NULL)
+			{
+				free(python_list_object_memory);
+				free(children_list_memory);
+				FreePyDictEntryList(children_dict_entries);
+				python_list_object_memory = NULL;
+				children_list_memory = NULL;
+				return NULL;
+			}
+
+			ULONGLONG py_children_list_dict_address = cast_byte_array_to_ulong(sliced, 8);
+			free(sliced);
+			sliced = NULL;
+
+			py_children_list_dict_entries = read_active_dictionary_entries_from_address(py_children_list_dict_address);
+			for (i = 0; i < py_children_list_dict_entries->used; ++i)
+			{
+				char* python_type_name = get_python_type_name_from_python_object_address(py_children_list_dict_entries->data[i]->key);
+				if (strcmp(python_type_name, "str") != 0)
+				{
+					free(python_type_name);
+					python_type_name = NULL;
+					continue;
+				}
+				char* key_string = read_python_string_value(py_children_list_dict_entries->data[i]->key, 4000);
+				if (strcmp(key_string, "_childrenObjects") == 0)
+				{
+					children_entry = py_children_list_dict_entries->data[i];
+					free(python_type_name);
+					free(key_string);
+					python_type_name = NULL;
+					key_string = NULL;
+					break;
+				}
+			}
+
+			if (children_entry == NULL)
+			{
+				free(children_list_memory);
+				FreePyDictEntryList(py_children_list_dict_entries);
+				FreePyDictEntryList(children_dict_entries);
+				children_list_memory = NULL;
+				py_children_list_dict_entries = NULL;
+				return NULL;
+			}
+
+			bytes_read = 0;
+			python_list_object_memory = read_bytes(children_entry->value, 0x20, &bytes_read);
+
+			if (python_list_object_memory == NULL)
+			{
+				free(children_list_memory);
+				FreePyDictEntryList(py_children_list_dict_entries);
+				FreePyDictEntryList(children_dict_entries);
+				children_list_memory = NULL;
+				return NULL;
+			}
+
+			if (bytes_read != 0x20)
+			{
+				free(python_list_object_memory);
+				free(children_list_memory);
+				FreePyDictEntryList(py_children_list_dict_entries);
+				FreePyDictEntryList(children_dict_entries);
+				python_list_object_memory = NULL;
+				children_list_memory = NULL;
+				return NULL;
+			}
+		}
+		free(children_list_type);
+
 		bytes_read = 0;
-		byte* python_list_object_memory = read_bytes(children_entry->value, 0x20, &bytes_read);
+		python_list_object_memory = read_bytes(children_entry->value, 0x20, &bytes_read);
 
 		if (python_list_object_memory == NULL)
 		{
 			free(children_list_memory);
+			FreePyDictEntryList(py_children_list_dict_entries);
 			FreePyDictEntryList(children_dict_entries);
 			children_list_memory = NULL;
 			return NULL;
@@ -1074,6 +1173,7 @@ UITreeNode** read_children(UITreeNodeDictEntryList* dict_entries_of_interest, in
 		{
 			free(python_list_object_memory);
 			free(children_list_memory);
+			FreePyDictEntryList(py_children_list_dict_entries);
 			FreePyDictEntryList(children_dict_entries);
 			python_list_object_memory = NULL;
 			children_list_memory = NULL;
@@ -1085,6 +1185,7 @@ UITreeNode** read_children(UITreeNodeDictEntryList* dict_entries_of_interest, in
 		{
 			free(python_list_object_memory);
 			free(children_list_memory);
+			FreePyDictEntryList(py_children_list_dict_entries);
 			FreePyDictEntryList(children_dict_entries);
 			python_list_object_memory = NULL;
 			children_list_memory = NULL;
@@ -1099,6 +1200,7 @@ UITreeNode** read_children(UITreeNodeDictEntryList* dict_entries_of_interest, in
 		{
 			free(python_list_object_memory);
 			free(children_list_memory);
+			FreePyDictEntryList(py_children_list_dict_entries);
 			FreePyDictEntryList(children_dict_entries);
 			python_list_object_memory = NULL;
 			children_list_memory = NULL;
@@ -1118,6 +1220,7 @@ UITreeNode** read_children(UITreeNodeDictEntryList* dict_entries_of_interest, in
 			free(python_list_object_memory);
 			free(children_list_memory);
 			free(list_entry_memory);
+			FreePyDictEntryList(py_children_list_dict_entries);
 			FreePyDictEntryList(children_dict_entries);
 			python_list_object_memory = NULL;
 			children_list_memory = NULL;
@@ -1137,6 +1240,7 @@ UITreeNode** read_children(UITreeNodeDictEntryList* dict_entries_of_interest, in
 		}
 		free(python_list_object_memory);
 		free(children_list_memory);
+		FreePyDictEntryList(py_children_list_dict_entries); // THIS MIGHT NEED TO GO AWAY
 		FreePyDictEntryList(children_dict_entries); // THIS MIGHT NEED TO GO AWAY
 		free(list_entries);
 		free(list_entry_memory);
@@ -1230,7 +1334,7 @@ UITreeNode* read_ui_tree_from_address(ULONGLONG address, int max_depth)
 			key_string = NULL;
 			continue;
 		}
-		
+
 		PythonDictValueRepresentation* repr = get_dict_entry_value_representation(dict_entries->data[i]->value);
 		if (repr == NULL)
 		{

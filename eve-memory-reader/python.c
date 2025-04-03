@@ -18,6 +18,7 @@ PyDictEntry* NewPyDictEntry(ULONGLONG hash, ULONGLONG key, ULONGLONG value)
 	e->hash = hash;
 	e->key = key;
 	e->value = value;
+	e->key_resolved = NULL;
 	return e;
 }
 
@@ -77,6 +78,12 @@ void FreePyDictEntry(PyDictEntry* e)
 {
 	if (e == NULL)
 		return;
+
+	if (e->key_resolved != NULL) {
+		free(e->key_resolved);
+		e->key_resolved = NULL;
+	}
+		
 	free(e);
 	e = NULL;
 }

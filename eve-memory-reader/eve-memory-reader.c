@@ -11,7 +11,7 @@ ULONGLONG cache_last_flushed = 0;
 char* ui_json = NULL;
 HANDLE hProcess;
 
-char* DICT_KEYS_OF_INTEREST[25] = {
+char* DICT_KEYS_OF_INTEREST[26] = {
 	"_top", "_left", "_width", "_height", "_displayX", "_displayY",
 	"_displayHeight", "_displayWidth",
 	"_name", "_text", "_setText",
@@ -42,8 +42,9 @@ char* DICT_KEYS_OF_INTEREST[25] = {
 
 	// Adding more keys causes buffer overflow after some time
 	// TODO: fix overflow (or confirm with testing that it came from other sources) and add the rest of the keys
-	"_texturePath"
+	"_texturePath",
 	//"_texturePath", "_opacity", "_bgColor", "isExpanded"
+	NULL
 };
 
 ULONGLONG find_min(const ULONGLONG* arr, UINT length) {
@@ -446,8 +447,13 @@ Addresses* find_python_type_candidates(Addresses* previous_candidates)
 Addresses* find_ui_roots()
 {
 	Addresses* ptot_candidates = find_python_type_object_type_candidates();
+
 	Addresses* pto_candidates = find_python_type_objects_candidates(ptot_candidates);
+	FreeAddresses(ptot_candidates);
+
 	Addresses* pt_candidates = find_python_type_candidates(pto_candidates);
+	FreeAddresses(pto_candidates);
+
 	return pt_candidates;
 }
 
@@ -667,7 +673,7 @@ char* read_python_string_value(ULONGLONG address, ULONGLONG max_length)
 		return NULL;
 	}
 
-	response = malloc(sizeof(char) * bytes_read + 1);
+	response = malloc(sizeof(char) * (bytes_read + 1));
 	memcpy_s(response, bytes_read, string_bytes, bytes_read);
 	response[bytes_read] = '\0';
 	free(string_bytes);
@@ -916,15 +922,17 @@ void read_python_type_PyColor(ULONGLONG address, PythonDictValueRepresentation* 
 	}
 
 	byte* sliced = slice_byte_array(py_color_object_memory, bytes_read, 0x10, bytes_read);
+	free(py_color_object_memory);
+	py_color_object_memory = NULL;
+
 	ULONGLONG dictionary_address = cast_byte_array_to_ulong(sliced, bytes_read - 0x10);
+	free(sliced);
+	sliced = NULL;
+
 	PyDictEntryList* dictionary_entries = get_dict_entries_with_string_keys(dictionary_address);
 
 	if (dictionary_entries == NULL) 
 	{
-		free(py_color_object_memory);
-		py_color_object_memory = NULL;
-		free(sliced);
-		sliced = NULL;
 		free(dictionary_entries);
 		return;
 	}
@@ -935,6 +943,9 @@ void read_python_type_PyColor(ULONGLONG address, PythonDictValueRepresentation* 
 	read_value_percent_from_dict_entry_key("_r", dictionary_entries, &color_representation->rPercent);
 	read_value_percent_from_dict_entry_key("_g", dictionary_entries, &color_representation->gPercent);
 	read_value_percent_from_dict_entry_key("_b", dictionary_entries, &color_representation->bPercent);
+
+	FreePyDictEntryList(dictionary_entries);
+	dictionary_entries = NULL;
 
 	repr->is_pycolor = TRUE;
 	repr->color_value = *color_representation;
@@ -1049,6 +1060,8 @@ UITreeNode** read_children(UITreeNodeDictEntryList* dict_entries_of_interest, in
 				key_string = NULL;
 				break;
 			}
+			free(python_type_name);
+			free(key_string);
 		}
 
 		if (children_entry == NULL)
@@ -1382,6 +1395,8 @@ UITreeNode* read_ui_tree_from_address(ULONGLONG address, int max_depth)
 
 __declspec(dllexport) void free_ui_json()
 {
+	if (ui_json == NULL)
+		return;
 	free(ui_json);
 	ui_json = NULL;
 }
@@ -1406,7 +1421,10 @@ __declspec(dllexport) void read_ui_trees()
 			//printf("found %I64u nodes!\n", number_of_nodes);
 			char* json_str = PrintUITreeNode(ui_tree, 0);
 			size_t json_str_len = strlen(json_str);
+
+			free_ui_json();
 			ui_json = malloc(json_str_len + 1);
+
 			memcpy_s(ui_json, json_str_len, json_str, json_str_len);
 			ui_json[json_str_len] = '\0';
 			free(json_str);
@@ -1481,6 +1499,7 @@ __declspec(dllexport) void free_string(char* str)
 
 __declspec(dllexport) void cleanup()
 {
+	free_ui_json();
 	FreeProcessSample(ps);
 	FreeAddresses(ui_roots);
 }

@@ -56,6 +56,8 @@ void FreeProcessSample(ProcessSample* ps)
 	}
 
 	ps->used = ps->size = 0;
+	free(ps);
+	ps = NULL;
 }
 
 void PrintProcessSample(ProcessSample* ps)

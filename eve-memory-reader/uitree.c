@@ -96,7 +96,10 @@ void FreeUITreeNode(UITreeNode* n)
 	}
 
 	if (n->dict_entries_of_interest != NULL)
+	{
 		FreeUITreeNodeDictEntryList(n->dict_entries_of_interest);
+		n->dict_entries_of_interest = NULL;
+	}
 
 	if (n->children != NULL)
 	{

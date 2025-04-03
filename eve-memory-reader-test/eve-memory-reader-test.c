@@ -15,4 +15,6 @@ int main()
 		fputs(uiJson, fp);
 		fclose(fp);
 	}
+
+	cleanup();
 }

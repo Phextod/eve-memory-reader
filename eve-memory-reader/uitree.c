@@ -133,6 +133,60 @@ char* PrintPyColor(PyColor* color)
 	return response;
 }
 
+int needs_json_escape(const char* s) {
+	if (s == NULL)
+		return 0;
+
+	while(*s)
+	{
+		char c = *s++;
+		if (c == '\"' || c == '\\' || c < 0x20) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void escape_json_string(char** in_str) {
+	if (!in_str || !*in_str) return;
+
+	const char* input = *in_str;
+	size_t len = strlen(input);
+
+	size_t alloc_size = len;
+	for (size_t i = 0; i < len; ++i)
+	{
+		unsigned char c = (unsigned char)input[i];
+		if (c == '\"' || c == '\\' || c == '\n' || c == '\r' || c == '\t' || c == '\b' || c == '\f')
+			alloc_size += 1;
+	}
+
+	char* output = malloc(sizeof(char) * (alloc_size + 1));
+	if (!output) return;
+
+	size_t out_i = 0;
+	for (size_t i = 0; i < len; ++i)
+	{
+		unsigned char c = (unsigned char)input[i];
+		switch (c)
+		{
+			case '\"': output[out_i++] = '\\'; output[out_i++] = '\"'; break;
+			case '\\': output[out_i++] = '\\'; output[out_i++] = '\\'; break;
+			case '\n': output[out_i++] = '\\'; output[out_i++] = 'n'; break;
+			case '\r': output[out_i++] = '\\'; output[out_i++] = 'r'; break;
+			case '\t': output[out_i++] = '\\'; output[out_i++] = 't'; break;
+			case '\b': output[out_i++] = '\\'; output[out_i++] = 'b'; break;
+			case '\f': output[out_i++] = '\\'; output[out_i++] = 'f'; break;
+			default:
+				output[out_i++] = c;
+		}
+	}
+
+	output[out_i] = '\0';
+	free(*in_str);
+	*in_str = output;
+}
+
 char* PrintUITreeNodeDictEntryList(UITreeNodeDictEntryList* del)
 {
 	char* response = malloc(sizeof(char) * 5000);
@@ -150,9 +204,17 @@ char* PrintUITreeNodeDictEntryList(UITreeNodeDictEntryList* del)
 
 		// print the value
 		if (del->data[i]->value->is_string)
+		{
+			if (needs_json_escape(del->data[i]->value->string_value))
+				escape_json_string(&(del->data[i]->value->string_value));
 			sprintf_s(response, 5000, "%s\"%s\",", response, del->data[i]->value->string_value);
+		}
 		else if (del->data[i]->value->is_unicode)
+		{
+			if (needs_json_escape(del->data[i]->value->unicode_value))
+				escape_json_string(&(del->data[i]->value->unicode_value));
 			sprintf_s(response, 5000, "%s\"%s\",", response, del->data[i]->value->unicode_value);
+		}
 		else if (del->data[i]->value->is_int)
 			sprintf_s(response, 5000, "%s%d,", response, del->data[i]->value->int_value);
 		else if (del->data[i]->value->is_float)

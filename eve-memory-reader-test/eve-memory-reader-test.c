@@ -1,3 +1,5 @@
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
 #include <stdio.h>
 //#include <eve-memory-reader.h>
 #include "../eve-memory-reader/eve-memory-reader.h"
@@ -17,4 +19,5 @@ int main()
 	}
 
 	cleanup();
+	_CrtDumpMemoryLeaks();
 }

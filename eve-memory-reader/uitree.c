@@ -199,37 +199,42 @@ char* PrintUITreeNodeDictEntryList(UITreeNodeDictEntryList* del)
 		if (del->data[i] == NULL || del->data[i]->key == NULL || del->data[i]->value == NULL)
 			continue;
 
-		// print the key
-		sprintf_s(response, 5000, "%s\"%s\": ", response, del->data[i]->key);
-
-		// print the value
-		if (del->data[i]->value->is_string)
+		if (del->data[i]->value->is_string && del->data[i]->value->string_value)
 		{
 			if (needs_json_escape(del->data[i]->value->string_value))
 				escape_json_string(&(del->data[i]->value->string_value));
+			sprintf_s(response, 5000, "%s\"%s\": ", response, del->data[i]->key);
 			sprintf_s(response, 5000, "%s\"%s\",", response, del->data[i]->value->string_value);
 		}
-		else if (del->data[i]->value->is_unicode)
+		else if (del->data[i]->value->is_unicode && del->data[i]->value->unicode_value)
 		{
 			if (needs_json_escape(del->data[i]->value->unicode_value))
 				escape_json_string(&(del->data[i]->value->unicode_value));
+			sprintf_s(response, 5000, "%s\"%s\": ", response, del->data[i]->key);
 			sprintf_s(response, 5000, "%s\"%s\",", response, del->data[i]->value->unicode_value);
 		}
-		else if (del->data[i]->value->is_int)
+		else if (del->data[i]->value->is_int) 
+		{
+			sprintf_s(response, 5000, "%s\"%s\": ", response, del->data[i]->key);
 			sprintf_s(response, 5000, "%s%d,", response, del->data[i]->value->int_value);
+		}
 		else if (del->data[i]->value->is_float)
+		{
+			sprintf_s(response, 5000, "%s\"%s\": ", response, del->data[i]->key);
 			sprintf_s(response, 5000, "%s%f,", response, del->data[i]->value->float_value);
+		}
 		else if (del->data[i]->value->is_bool)
+		{
+			sprintf_s(response, 5000, "%s\"%s\": ", response, del->data[i]->key);
 			sprintf_s(response, 5000, "%s%s,", response, del->data[i]->value->bool_value ? "true" : "false");
+		}
 		else if (del->data[i]->value->is_pycolor)
 		{
+			sprintf_s(response, 5000, "%s\"%s\": ", response, del->data[i]->key);
 			char* color_string = PrintPyColor(&del->data[i]->value->color_value);
 			sprintf_s(response, 5000, "%s%s,", response, color_string);
 			free(color_string);
 		}
-			
-		else
-			sprintf_s(response, 5000, "%snull,", response);
 	}
 	if (strlen(response) == 0)
 		return response;

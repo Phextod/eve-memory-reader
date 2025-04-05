@@ -1,3 +1,5 @@
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
 #include "eve-memory-reader.h"
 
 
@@ -11,7 +13,7 @@ ULONGLONG cache_last_flushed = 0;
 char* ui_json = NULL;
 HANDLE hProcess;
 
-char* DICT_KEYS_OF_INTEREST[26] = {
+char* DICT_KEYS_OF_INTEREST[27] = {
 	"_top", "_left", "_width", "_height", "_displayX", "_displayY",
 	"_displayHeight", "_displayWidth",
 	"_name", "_text", "_setText",
@@ -38,7 +40,8 @@ char* DICT_KEYS_OF_INTEREST[26] = {
 	"_sr",
 
 	//  Found in "_sr" Bunch
-	//"htmlstr"
+	//	Filtered out in read_python_type_bunch()
+	//"htmlstr",
 
 	// Adding more keys causes buffer overflow after some time
 	// TODO: fix overflow (or confirm with testing that it came from other sources) and add the rest of the keys
@@ -334,7 +337,11 @@ Addresses* find_python_type_objects_candidates_within_region(CommittedRegion* cr
 	InitAddresses(candidates);
 	ULONGLONG* memory_region_ulong = read_memory_region_content_as_ulong_array(cr);
 	if (memory_region_ulong == NULL)
+	{
+		FreeAddresses(candidates);
 		return;
+	}
+
 
 	UINT candidate_address_index;
 	for (candidate_address_index = 0; candidate_address_index < (cr->region_size / 8) - 4; ++candidate_address_index)
@@ -879,6 +886,56 @@ PyDictEntryList* get_dict_entries_with_string_keys(ULONGLONG address)
 
 void read_python_type_bunch(ULONGLONG address, PythonDictValueRepresentation* repr)
 {
+	PyDictEntryList* dict_entries = read_active_dictionary_entries_from_address(address);
+	if (dict_entries == NULL)
+	{
+		return NULL;
+	}
+
+	UINT i;
+	for (i = 0; i < dict_entries->used; ++i)
+	{
+		char* key_object_type_name = get_python_type_name_from_python_object_address(dict_entries->data[i]->key);
+
+		if (key_object_type_name == NULL)
+		{
+			continue;
+		}
+
+		if (strcmp(key_object_type_name, "str") != 0)
+		{
+			free(key_object_type_name);
+			key_object_type_name = NULL;
+			continue;
+		}
+		free(key_object_type_name);
+		key_object_type_name = NULL;
+
+		char* key_string = read_python_string_value(dict_entries->data[i]->key, 4000);
+
+		if (strcmp(key_string, "htmlstr") != 0)
+		{
+			free(key_string);
+			key_string = NULL;
+			continue;
+		}
+		free(key_string);
+
+		PythonDictValueRepresentation* value_repr = get_dict_entry_value_representation(dict_entries->data[i]->value);
+		if (value_repr == NULL)
+			continue;
+
+		if (!value_repr->is_unicode) {
+			FreePythonDictValueRepresentation(value_repr);
+			continue;
+		}
+
+		repr->is_unicode = TRUE;
+		repr->unicode_value = _strdup(value_repr->unicode_value);
+		FreePythonDictValueRepresentation(value_repr);
+		break;
+	}
+	FreePyDictEntryList(dict_entries);
 }
 
 void read_value_percent_from_dict_entry_key(const char* dict_entry_key, PyDictEntryList* dictionary_entries, int* return_value)
@@ -967,6 +1024,12 @@ PythonDictValueRepresentation* get_dict_entry_value_representation(ULONGLONG add
 		return repr;
 	}
 	repr = malloc(sizeof(PythonDictValueRepresentation));
+	if (repr == NULL)
+	{
+		printf("Failed to allocate memory for pyDictValueRepresentation");
+		exit(1);
+	}
+
 	repr->address = address;
 	repr->python_object_type_name = python_type_name;
 	repr->is_string = FALSE;
@@ -975,7 +1038,6 @@ PythonDictValueRepresentation* get_dict_entry_value_representation(ULONGLONG add
 	repr->is_float = FALSE;
 	repr->is_bool = FALSE;
 	repr->is_pycolor = FALSE;
-	repr->is_bunch = FALSE;
 	repr->string_value = NULL;
 	repr->unicode_value = NULL;
 	repr->int_value = 0;
@@ -1108,6 +1170,8 @@ UITreeNode** read_children(UITreeNodeDictEntryList* dict_entries_of_interest, in
 				children_list_memory = NULL;
 				return NULL;
 			}
+			free(python_list_object_memory);
+			python_list_object_memory = NULL;
 
 			ULONGLONG py_children_list_dict_address = cast_byte_array_to_ulong(sliced, 8);
 			free(sliced);
@@ -1142,29 +1206,6 @@ UITreeNode** read_children(UITreeNodeDictEntryList* dict_entries_of_interest, in
 				FreePyDictEntryList(children_dict_entries);
 				children_list_memory = NULL;
 				py_children_list_dict_entries = NULL;
-				return NULL;
-			}
-
-			bytes_read = 0;
-			python_list_object_memory = read_bytes(children_entry->value, 0x20, &bytes_read);
-
-			if (python_list_object_memory == NULL)
-			{
-				free(children_list_memory);
-				FreePyDictEntryList(py_children_list_dict_entries);
-				FreePyDictEntryList(children_dict_entries);
-				children_list_memory = NULL;
-				return NULL;
-			}
-
-			if (bytes_read != 0x20)
-			{
-				free(python_list_object_memory);
-				free(children_list_memory);
-				FreePyDictEntryList(py_children_list_dict_entries);
-				FreePyDictEntryList(children_dict_entries);
-				python_list_object_memory = NULL;
-				children_list_memory = NULL;
 				return NULL;
 			}
 		}

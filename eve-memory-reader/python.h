@@ -21,7 +21,6 @@ typedef struct {
 	BOOL is_bool;
 	BOOL is_float;
 	BOOL is_pycolor;
-	BOOL is_bunch;
 	char* string_value;
 	char* unicode_value;
 	INT int_value;

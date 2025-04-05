@@ -5,6 +5,8 @@
 * Added handling for PyColor and float data types
 * Fixed crash on fitting window
 * Added a special case for reading the child nodes of ButtonGroup type nodes
+* Added handling for Bunch type (only to read "htmlstr")
+* Fixed memory leaks
 
 ---
 

@@ -339,7 +339,7 @@ Addresses* find_python_type_objects_candidates_within_region(CommittedRegion* cr
 	if (memory_region_ulong == NULL)
 	{
 		FreeAddresses(candidates);
-		return;
+		return NULL;
 	}
 
 
@@ -361,7 +361,7 @@ Addresses* find_python_type_objects_candidates_within_region(CommittedRegion* cr
 
 		char* candidate_tp_name = read_string_from_address(memory_region_ulong[candidate_address_index + 3]);
 
-
+		
 		if (candidate_tp_name == NULL)
 			continue;
 		if (strcmp(candidate_tp_name, "UIRoot") != 0)

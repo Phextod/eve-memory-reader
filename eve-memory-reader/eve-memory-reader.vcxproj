@@ -183,6 +183,7 @@
     <ClCompile Include="memory.c" />
     <ClCompile Include="process.c" />
     <ClCompile Include="python.c" />
+    <ClCompile Include="sb.c" />
     <ClCompile Include="uitree.c" />
   </ItemGroup>
   <ItemGroup>
@@ -190,6 +191,7 @@
     <ClInclude Include="memory.h" />
     <ClInclude Include="process.h" />
     <ClInclude Include="python.h" />
+    <ClInclude Include="sb.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="uitree.h" />
   </ItemGroup>

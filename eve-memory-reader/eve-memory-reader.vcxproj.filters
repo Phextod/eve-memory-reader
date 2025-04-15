@@ -30,6 +30,9 @@
     <ClCompile Include="uitree.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="memory.h">
@@ -48,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="eve-memory-reader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

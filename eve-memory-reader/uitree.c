@@ -1,4 +1,5 @@
 #include "uitree.h"
+#include "sb.h"
 
 UITreeNodeDictEntryList* NewUITreeNodeDictEntryList()
 {
@@ -247,37 +248,40 @@ char* PrintUITreeNodeDictEntryList(UITreeNodeDictEntryList* del)
 
 char* PrintUITreeNode(UITreeNode* n, int level)
 {
-	size_t size = 700000;
-	char* response = malloc(sizeof(char) * size);
+	StringBuilder* response = sb_create();
 	if (n == NULL)
 		return response;
-	sprintf_s(response, size, "{");
-	sprintf_s(response, size, "%s\"address\": %I64u,", response, n->address);
-	sprintf_s(response, size, "%s\"type\": \"%s\",", response, n->python_object_type_name);
-	sprintf_s(response, size, "%s\"attrs\": {", response);
+	sb_append(response, "{");
+	sb_appendf(response, "\"address\": %I64u,", n->address);
+	sb_appendf(response, "\"type\": \"%s\",", n->python_object_type_name);
+	sb_append(response, "\"attrs\": {");
 	if (n->dict_entries_of_interest->used > 0)
 	{
 		char* dict_response = PrintUITreeNodeDictEntryList(n->dict_entries_of_interest);
-		sprintf_s(response, size, "%s%s", response, dict_response);
+		sb_appendf(response, "%s", dict_response);
 		free(dict_response);
 	}
-	sprintf_s(response, size, "%s},", response);
+	sb_append(response, "},");
 	UINT i;
-	sprintf_s(response, size, "%s\"children\": [", response);
+	sb_append(response, "\"children\": [");
 	for (i = 0; i < n->number_of_children; ++i)
 	{
 		if (n->children[i] != NULL)
 		{
 			char* child_response = PrintUITreeNode(n->children[i], level + 1);
-			sprintf_s(response, size, "%s%s", response, child_response);
+			sb_append(response, child_response);
 			free(child_response);
 			if (i < n->number_of_children - 1)
-				sprintf_s(response, size, "%s,", response);
+				sb_append(response, ",");
 		}
 	}
-	sprintf_s(response, size, "%s]}", response);
+	sb_append(response, "]}");
 	if (level == 0)
-		sprintf_s(response, size, "%s\n", response);
-	return response;
+		sb_append(response, "\n");
+
+	char* response_str = sb_concat(response);
+	sb_free(response);
+
+	return response_str;
 }
 

@@ -13,7 +13,7 @@ ULONGLONG cache_last_flushed = 0;
 char* ui_json = NULL;
 HANDLE hProcess;
 
-char* DICT_KEYS_OF_INTEREST[27] = {
+char* DICT_KEYS_OF_INTEREST[34] = {
 	"_top", "_left", "_width", "_height", "_displayX", "_displayY",
 	"_displayHeight", "_displayWidth",
 	"_name", "_text", "_setText",
@@ -28,7 +28,7 @@ char* DICT_KEYS_OF_INTEREST[27] = {
 	"_lastValue",
 
 	//  Found in "ModuleButton"
-	"ramp_active",
+	"ramp_active", "isDeactivating", "autorepeat", "online", "quantity",
 
 	//  Found in the Transforms contained in "ShipModuleButtonRamps"
 	"_rotation",
@@ -43,8 +43,6 @@ char* DICT_KEYS_OF_INTEREST[27] = {
 	//	Filtered out in read_python_type_bunch()
 	//"htmlstr",
 
-	// Adding more keys causes buffer overflow after some time
-	// TODO: fix overflow (or confirm with testing that it came from other sources) and add the rest of the keys
 	"_texturePath",
 	//"_texturePath", "_opacity", "_bgColor", "isExpanded"
 	NULL
@@ -1513,11 +1511,14 @@ void get_memory_and_root_addresses(DWORD pid)
 }
 
 
-__declspec(dllexport) int initialize()
+__declspec(dllexport) int initialize(DWORD pid)
 {
 	primary_ui_root = 0;
-	DWORD pid = get_pid(PROCESS_NAME);
-	if (pid == -1)
+
+	if (pid == 0)
+		pid = get_pid(PROCESS_NAME);
+
+	if (pid == 0)
 	{
 		printf("Process not found\n");
 		return 1;

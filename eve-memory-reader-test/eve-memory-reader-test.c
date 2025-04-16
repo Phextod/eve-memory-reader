@@ -7,7 +7,7 @@
 
 int main()
 {
-	initialize();
+	initialize(0);
 	read_ui_trees();
 
 	char* uiJson = get_ui_json();

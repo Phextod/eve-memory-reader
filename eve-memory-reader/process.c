@@ -102,7 +102,7 @@ void get_process_name_from_pid(DWORD pid, char** process_name_out)
 
 DWORD get_pid(char * process_name)
 {
-	DWORD pid = -1;
+	DWORD pid = 0;
 	unsigned int i;
 	DWORD processes[1024], cb_needed, num_processes;
 	if (!EnumProcesses(processes, sizeof(processes), &cb_needed))
@@ -123,7 +123,7 @@ DWORD get_pid(char * process_name)
 				pid = processes[i];
 			}
 			free(pid_process_name);
-			if (pid != -1)
+			if (pid != 0)
 			{
 				break;
 			}

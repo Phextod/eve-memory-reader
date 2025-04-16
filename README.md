@@ -7,6 +7,7 @@
 * Added a special case for reading the child nodes of ButtonGroup type nodes.
 * Added handling for Bunch type (only to read "htmlstr").
 * Fixed memory leaks.
+* Added option to get the PID as init agument, to be able to handle multiple clients.
 
 ---
 
